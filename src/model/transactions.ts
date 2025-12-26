@@ -41,6 +41,12 @@ const Transactions = {
 
   const result = await pool.query(query, values);
   return result.rows[0];
+},
+
+async getUserTransaction(id: any){
+  const result = await pool.query("SELECT * FROM transactions WHERE user_id =$1", [id]);
+    return result.rows[0];
+
 }
 
 }
