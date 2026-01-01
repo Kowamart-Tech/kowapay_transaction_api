@@ -121,6 +121,80 @@ export const sendLoginNotificationEmail = async (
   await sendEmail(email, subject, html);
 };
 
+
+/**
+ * Send Transaction Notification Email
+ */
+export const sendTransactionNotificationEmail = async (
+  email: string,
+  data: {
+    fullName?: string;
+    amount: number;
+    currency: string;
+    transactionType: string;
+    reference: string;
+    status: "SUCCESS" | "PENDING" | "FAILED";
+    createdAt?: Date;
+  }
+): Promise<void> => {
+  const {
+    fullName,
+    amount,
+    currency,
+    transactionType,
+    reference,
+    status,
+    createdAt,
+  } = data;
+
+  const subject = "Transaction Notification";
+  const txTime = (createdAt ?? new Date()).toLocaleString();
+
+  const html = `
+    <h2>Transaction Alert</h2>
+
+    <p>Hello ${
+      fullName ? capitalizeEachWord(fullName) : "User"
+    },</p>
+
+    <p>A transaction has occurred on your <strong>${APP_NAME}</strong> account.</p>
+
+    <table style="border-collapse: collapse; margin-top: 10px;">
+      <tr>
+        <td><strong>Type:</strong></td>
+        <td>${transactionType}</td>
+      </tr>
+      <tr>
+        <td><strong>Amount:</strong></td>
+        <td>${currency} ${amount.toLocaleString()}</td>
+      </tr>
+      <tr>
+        <td><strong>Status:</strong></td>
+        <td>${status}</td>
+      </tr>
+      <tr>
+        <td><strong>Reference:</strong></td>
+        <td>${reference}</td>
+      </tr>
+      <tr>
+        <td><strong>Date:</strong></td>
+        <td>${txTime}</td>
+      </tr>
+    </table>
+
+    <p style="margin-top: 15px;">
+      If you did not initiate this transaction, please contact our support team immediately.
+    </p>
+
+    <p>
+      Thank you for using <strong>${APP_NAME}</strong>.
+    </p>
+  `;
+
+  await sendEmail(email, subject, html);
+};
+
+
 /**
  * Send Reset URL Email
  */
@@ -139,9 +213,5 @@ export const sendResetOTP = async (
 
   await sendEmail(email, subject, html);
 };
-export default {
-  sendOtpEmail,
-  sendForgotPasswordEmail,
-  sendLoginNotificationEmail,
-  sendResetOTP,
-};
+
+
