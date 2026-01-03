@@ -1,13 +1,13 @@
-import { Pool } from "pg";
+import pool from "../config/db";
 import { User, UserProfile, KycStatus } from "../types/user";
 
-const pool = new Pool(); // reuse config
+
 
 export class UserService {
   /** Check if user exists */
   static async findById(userId: string): Promise<User | null> {
     const result = await pool.query<User>(
-      `SELECT user_id, full_name, email, phone_number, user_type, kyc_level, bvn, nin, created_at
+      `SELECT user_id, full_name, email, phone_number, user_type, kyc_level, bvn, nin, joined_date
        FROM users WHERE user_id = $1`,
       [userId]
     );
@@ -29,11 +29,11 @@ export class UserService {
   /** KYC check before transactions */
   static async getKycStatus(userId: string): Promise<KycStatus> {
     const result = await pool.query<KycStatus>(
-      `SELECT tier, status FROM kyc_tiers WHERE user_id = $1`,
+      `SELECT kyc_level FROM users WHERE user_id = $1`,
       [userId]
     );
 
-    return result.rows[0] ?? { tier: 0, status: "pending" };
+    return result.rows[0] || { kyc_level: 0 };
   }
 
   /** Optional: profile data */

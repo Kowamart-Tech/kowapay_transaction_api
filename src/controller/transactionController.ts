@@ -8,7 +8,8 @@ import { sendTransactionNotificationEmail } from "../service/emailService";
 const TransactionController = {
   async createTransaction(req: any, res: any) {
     try {
-      const { userId, amount, type, currency } = req.body;
+      const { userId, amount, type, currency, reference } = req.body;
+      console.log("Create Transaction Request Body:", req.body);
 
       if (!userId || !amount || !type) {
         throw new HttpException(
@@ -19,6 +20,7 @@ const TransactionController = {
 
       /**  Check user existence */
       const user = await UserService.findById(userId);
+      console.log("User fetched for transaction:", user);
       if (!user) {
         throw new HttpException(
           statusCodes.NOT_FOUND,
@@ -26,21 +28,22 @@ const TransactionController = {
         );
       }
 
-      /**  Check KYC before transaction */
-      const kyc = await UserService.getKycStatus(userId);
-      if (kyc.tier < 2) {
-        throw new HttpException(
-          statusCodes.BAD_REQUEST,
-          "Complete KYC to perform this transaction"
-        );
-      }
+      // /**  Check KYC before transaction */
+      // const kyc = await UserService.getKycStatus(userId);
+      // if (kyc.tier < 2) {
+      //   throw new HttpException(
+      //     statusCodes.BAD_REQUEST,
+      //     "Complete KYC to perform this transaction"
+      //   );
+      // }
 
       /**  Create transaction */
       const transaction = await TransactionService.createTransaction({
-        userId,
+        user_id: user.user_id,
         amount,
         type,
         currency,
+        reference:reference
       });
 
       await sendTransactionNotificationEmail(user.email, {
@@ -63,6 +66,7 @@ const TransactionController = {
 
 
     } catch (error: any) {
+      console.error("CREATE TRANSACTION ERROR:", error);
       if (error instanceof HttpException) {
         return res.status(error.status).json({
           status: "error",
