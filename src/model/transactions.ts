@@ -9,6 +9,7 @@ export interface ITransaction {
   paymentMethod: string;
   paymentType?: string;
   transactionId?: string;
+  transaction_type?: string;
   reference: string;
   metadata?: Record<string, any>;
   createdAt: Date;
@@ -20,8 +21,8 @@ const Transactions = {
     async  createTransaction(tx: ITransaction) {
         const query = `
             INSERT INTO transactions 
-            (user_id, amount, currency, status, payment_method, payment_type, reference, metadata)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+            (user_id, amount, currency, transaction_type, status, payment_method, payment_type, reference, metadata)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             RETURNING *;
         `;
   
@@ -29,11 +30,12 @@ const Transactions = {
     tx.user_id,
     tx.amount,
     tx.currency,
-    tx.status,
+    tx.status ?? "pending",
+    tx.transaction_type ?? null,
     tx.paymentMethod,
-    tx.paymentType || null,
+    tx.paymentType ?? null,
     tx.reference,
-    tx.metadata || null,
+    tx.metadata ?? null,
   ];
 
   const result = await pool.query(query, values);
@@ -41,10 +43,17 @@ const Transactions = {
 },
 
 async getUserTransaction(id: any){
-  const result = await pool.query("SELECT * FROM transactions WHERE user_id =$1", [id]);
+  const result = await pool.query("SELECT * FROM transactions WHERE transaction_id =$1", [id]);
     return result.rows[0];
 
+},
+
+async getUserBalance(id: string) {
+  const result = await pool.query("SELECT * FROM users WHERE balance =$1", [id]);
+  return result.rows[0];
 }
+
+
 
 }
 

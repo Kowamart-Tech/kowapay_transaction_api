@@ -151,7 +151,7 @@ export const sendTransactionNotificationEmail = async (
   const txTime = (createdAt ?? new Date()).toLocaleString();
 
   const html = `
-    <h2>Transaction Alert</h2>
+    <h2>${transactionType} Alert!</h2>
 
     <p>Hello ${
       fullName ? capitalizeEachWord(fullName) : "User"

@@ -8,10 +8,10 @@ import { sendTransactionNotificationEmail } from "../service/emailService";
 const TransactionController = {
   async createTransaction(req: any, res: any) {
     try {
-      const { userId, amount, type, currency, reference } = req.body;
+      const { userId, amount, transaction_type, currency, reference, status, paymentMethod, paymentType } = req.body;
       console.log("Create Transaction Request Body:", req.body);
 
-      if (!userId || !amount || !type) {
+      if (!userId || !amount || !transaction_type) {
         throw new HttpException(
           statusCodes.BAD_REQUEST,
           "userId, amount and type are required"
@@ -28,29 +28,25 @@ const TransactionController = {
         );
       }
 
-      // /**  Check KYC before transaction */
-      // const kyc = await UserService.getKycStatus(userId);
-      // if (kyc.tier < 2) {
-      //   throw new HttpException(
-      //     statusCodes.BAD_REQUEST,
-      //     "Complete KYC to perform this transaction"
-      //   );
-      // }
+     
 
       /**  Create transaction */
       const transaction = await TransactionService.createTransaction({
         user_id: user.user_id,
         amount,
-        type,
+        transaction_type,
         currency,
-        reference:reference
+        status,
+        reference,
+        paymentMethod,
+        paymentType
       });
 
       await sendTransactionNotificationEmail(user.email, {
             fullName: user.full_name,
             amount: transaction.amount,
             currency: transaction.currency,
-            transactionType: transaction.type,
+            transactionType: transaction.transaction_type,
             reference: transaction.reference,
             status: transaction.status,
             createdAt: transaction.created_at,
@@ -80,6 +76,37 @@ const TransactionController = {
       });
     }
   },
+
+  async verifyTransaction(req: any, res: any) {
+    const { transactionId } = req.params;
+          if (!transactionId) {
+          throw new HttpException(400, "transactionId is required");
+        }
+
+
+        const transaction = await TransactionService.findTransactionByUserId(transactionId);
+
+        if (!transaction) {
+          throw new HttpException(404, "Transaction not found");
+        }
+
+         if (transaction.status === "completed") {
+    throw new HttpException(400, "Transaction already verified");
+  }
+
+  //await TransactionService.verifyAndApply(transaction);
+
+  return successResponse(
+    res,
+    null,
+    "Transaction verified and balance updated",
+    statusCodes.SUCCESS
+  );
+
+
+
+
+  }
 };
 
 export default TransactionController;

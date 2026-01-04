@@ -6,5 +6,6 @@ import { authMiddleware } from "../middleware/authMiddleware";
 const transactRouter = express.Router();
 
 transactRouter.post("/transactions", errorHandler(TransactionController.createTransaction));
+transactRouter.post("/transactions/verify/:transactionId", authMiddleware, errorHandler(TransactionController.verifyTransaction));
 
 export default transactRouter;
