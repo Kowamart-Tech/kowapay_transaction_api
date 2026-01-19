@@ -8,7 +8,7 @@ import { sendTransactionNotificationEmail } from "../service/emailService";
 const TransactionController = {
   async createTransaction(req: any, res: any) {
     try {
-      const { userId, amount, transaction_type, currency, reference, status, paymentMethod, paymentType } = req.body;
+      const { userId, amount, currency, transaction_type, paymentMethod, paymentType, reference,  metadata } = req.body;
       console.log("Create Transaction Request Body:", req.body);
 
       if (!userId || !amount || !transaction_type) {
@@ -34,12 +34,13 @@ const TransactionController = {
       const transaction = await TransactionService.createTransaction({
         user_id: user.user_id,
         amount,
-        transaction_type,
+        status: 'pending',
         currency,
-        status,
-        reference,
+        transaction_type,
         paymentMethod,
-        paymentType
+        paymentType,
+        reference,
+        metadata
       });
 
       await sendTransactionNotificationEmail(user.email, {
@@ -90,10 +91,7 @@ const TransactionController = {
           throw new HttpException(404, "Transaction not found");
         }
 
-         if (transaction.status === "completed") {
-    throw new HttpException(400, "Transaction already verified");
-  }
-
+    
   //await TransactionService.verifyAndApply(transaction);
 
   return successResponse(

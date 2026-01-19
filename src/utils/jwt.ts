@@ -26,7 +26,7 @@ export const jwtSign = (
  * JWT Verify
  */
 export const jwtVerify = <T = JwtPayload>(
-  token: string
+token: string, p0: unknown  
 ): T => {
   return jwt.verify(token, JWT_SECRET) as T;
 };

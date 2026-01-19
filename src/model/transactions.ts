@@ -18,7 +18,7 @@ export interface ITransaction {
 
 const Transactions = {
 
-    async  createTransaction(tx: ITransaction) {
+async  createTransaction(tx: ITransaction) {
         const query = `
             INSERT INTO transactions 
             (user_id, amount, currency, transaction_type, status, payment_method, payment_type, reference, metadata)
@@ -43,17 +43,36 @@ const Transactions = {
 },
 
 async getUserTransaction(id: any){
-  const result = await pool.query("SELECT * FROM transactions WHERE transaction_id =$1", [id]);
-    return result.rows[0];
+  const result = await pool.query("SELECT * FROM transactions WHERE user_id =$1", [id]);
+    return result.rows;
 
 },
 
 async getUserBalance(id: string) {
   const result = await pool.query("SELECT * FROM users WHERE balance =$1", [id]);
   return result.rows[0];
+},
+
+async getTransactionByDate(userId: string, year?: number,status?: string){
+    let query = `SELECT * FROM transactions WHERE user_id = $1`;
+    const values: any[] = [userId];
+    if (year) {
+    query += ` AND EXTRACT(YEAR FROM created_at) = $${values.length + 1}`;
+    values.push(year);
+  }
+
+  if (status) {
+    query += ` AND status = $${values.length + 1}`;
+    values.push(status);
+  }
+
+  query += ` ORDER BY created_at DESC`;
+
+  const result = await pool.query(query, values);
+  return result.rows;
+
+
 }
-
-
 
 }
 

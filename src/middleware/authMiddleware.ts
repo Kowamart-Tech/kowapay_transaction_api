@@ -1,64 +1,55 @@
 import { Request, Response, NextFunction } from "express";
 import { jwtVerify } from "../utils/jwt";
-import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import { User } from "../types/user";
 
-/**
- * Authentication middleware
- */
-export const authMiddleware = (
-  req: Request,
+export interface CustomRequest extends Request {
+  user?: User;
+}
+
+export const auth = async (
+  req: CustomRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<any> => {
   const bearer = req.header("Authorization");
+  if (bearer) {
+    if (bearer.startsWith("Bearer ")) {
+      const token = bearer.split(" ")[1];
 
-  if (!bearer) {
-    res.status(403).json({
-      status: 403,
-      success: false,
-      message: "Access denied",
-    });
-    return;
-  }
-
-  if (!bearer.startsWith("Bearer ")) {
-    res.status(401).json({
-      status: 401,
-      success: false,
-      message: "Authorization type is Bearer <token>",
-    });
-    return;
-  }
-
-  const token = bearer.split(" ")[1];
-
-  try {
-    const decoded = jwtVerify(token);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    if (error instanceof TokenExpiredError) {
-      res.status(401).json({
+      jwtVerify(
+        token,
+        (error: jwt.VerifyErrors | null, user: string | object | undefined) => {
+          if (error) {
+            if (error.name === "TokenExpiredError") {
+              return res.status(401).json({
+                status: 401,
+                success: false,
+                message: "Token has expired",
+                error,
+              });
+            }
+            return res.status(401).json({
+              status: 401,
+              success: false,
+              message: "Invalid token",
+              error,
+            });
+          }
+          req.user = user as User;
+          next();
+        }
+      );
+    } else {
+      return res.status(401).json({
         status: 401,
         success: false,
-        message: "Token has expired",
+        message: "Authorization type is Bearer <token>",
       });
-      return;
     }
-
-    if (error instanceof JsonWebTokenError) {
-      res.status(401).json({
-        status: 401,
-        success: false,
-        message: "Invalid token",
-      });
-      return;
-    }
-
-    res.status(401).json({
-      status: 401,
-      success: false,
-      message: "Authentication failed",
-    });
+  } else {
+    return res
+      .status(403)
+      .json({ status: 403, success: false, message: "Access denied" });
   }
 };
