@@ -9,9 +9,17 @@ const TransactionService = {
   findTransactionByUserId: async (userId: string) => {
     const transaction = await Transactions.getUserTransaction(userId);
     return transaction;
+  },
+
+  getUserTransactions: async (userId: string) => {
+    const transactions = await Transactions.getUserTransactions(userId);
+    return transactions;
+  },
+
+  getTransactionHistory: async (userId: string) => {
+    const history = await Transactions.transactionHistory(userId);
+    return history;
   }
-
-
 }
 
 

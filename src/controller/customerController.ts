@@ -8,12 +8,20 @@ import TransactionService from "../service/transactionservice";
 const CustomerController = {
   transferDispute: async (req: any, res: any) => {
   try {
-    const { userId, year } = req.body;
+    const userId = req.user._id;
+    const {   year, week, day, status } = req.query;
 
-    if (!userId || !year) {
+    if (!userId) {
+  throw new HttpException(
+    statusCodes.BAD_REQUEST,
+    "User not authenticated"
+  );
+}
+
+    if (!year && !week && !day) {
       throw new HttpException(
         statusCodes.BAD_REQUEST,
-        "userId and year are required"
+        "At least one of year, week, or day is required"
       );
     }
 
@@ -24,7 +32,10 @@ const CustomerController = {
 
     const transactions = await CustomerService.transferDispute(
       userId,
-      year
+      {year: year ? Number(year) : undefined,
+    week: week ? Number(week) : undefined,
+    day: day as string,
+    status: status as string}
     );
 
     return successResponse(
@@ -92,7 +103,55 @@ createTransferDispute: async (req: any, res: any) => {
       message: error.message || "Internal Server Error",
     });
   }
+},
+
+
+airtimeDispute: async (req: any, res: any) => {
+  try {
+    const userId = req.user._id;
+    const {   year, week, day, status } = req.query;
+
+    if (!userId) {
+  throw new HttpException(
+    statusCodes.BAD_REQUEST,
+    "User not authenticated"
+  );
 }
+
+    if (!year && !week && !day) {
+      throw new HttpException(
+        statusCodes.BAD_REQUEST,
+        "At least one of year, week, or day is required"
+      );
+    }
+
+    const user = await UserService.findById(userId);
+    if (!user) {
+      throw new HttpException(statusCodes.NOT_FOUND, "User not found");
+    }
+
+    const transactions = await CustomerService.airtimeDispute(
+      userId,
+      {year: year ? Number(year) : undefined,
+    week: week ? Number(week) : undefined,
+    day: day as string,
+    status: status as string}
+    );
+
+    return successResponse(
+      res,
+      transactions,
+      "User transactions fetched successfully",
+      statusCodes.SUCCESS
+    );
+
+  } catch (error: any) {
+    return res.status(error.status || 500).json({
+      status: "error",
+      message: error.message || "Internal Server Error",
+    });
+  }
+},
 
 
 

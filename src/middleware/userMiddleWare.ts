@@ -1,14 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { jwtVerify } from "../utils/jwt";
 
-export const authMiddleware = (
+export const userAuthMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
@@ -16,22 +16,18 @@ export const authMiddleware = (
 
   jwtVerify(token, (err, decoded) => {
     if (err) {
-      if (err.name === "TokenExpiredError") {
-        return res.status(401).json({
-          message: "Token expired"
-        });
-      }
-
       return res.status(401).json({
-        message: "Invalid token"
+        message: err.name === "TokenExpiredError"
+          ? "Token expired"
+          : "Invalid token"
       });
     }
 
-    // decoded is JwtPayload | string
     const payload = decoded as any;
 
     req.user = {
-      id: payload.sub || payload.id,
+      _id: payload._id,          
+      phone: payload.phone,
       user_type: payload.user_type,
       kyc_level: payload.kyc_level
     };
@@ -39,3 +35,4 @@ export const authMiddleware = (
     next();
   });
 };
+

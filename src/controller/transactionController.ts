@@ -4,12 +4,15 @@ import statusCodes from "../constants/statuscodes";
 import TransactionService from "../service/transactionservice";
 import { UserService } from "../service/userService";
 import { sendTransactionNotificationEmail } from "../service/emailService";
+import axios from "axios";
+import { get } from "http";
+
 
 const TransactionController = {
-  async createTransaction(req: any, res: any) {
+   createTransaction: async(req: any, res: any) => {
     try {
-      const { userId, amount, currency, transaction_type, paymentMethod, paymentType, reference,  metadata } = req.body;
-      console.log("Create Transaction Request Body:", req.body);
+      const userId = req.user.user._id;
+      const { amount, currency, transaction_type, paymentMethod, paymentType, reference,  metadata } = req.body;
 
       if (!userId || !amount || !transaction_type) {
         throw new HttpException(
@@ -63,7 +66,6 @@ const TransactionController = {
 
 
     } catch (error: any) {
-      console.error("CREATE TRANSACTION ERROR:", error);
       if (error instanceof HttpException) {
         return res.status(error.status).json({
           status: "error",
@@ -78,7 +80,7 @@ const TransactionController = {
     }
   },
 
-  async verifyTransaction(req: any, res: any) {
+  verifyTransaction: async (req: any, res: any) => {
     const { transactionId } = req.params;
           if (!transactionId) {
           throw new HttpException(400, "transactionId is required");
@@ -104,7 +106,78 @@ const TransactionController = {
 
 
 
+  },
+
+  getUserTransactions: async (req: any, res: any) => {
+    try {
+      const userId = req.user._id;
+
+
+      if(!userId){
+        throw new HttpException(401, 'Unauthorized');
+      }
+
+      const verifyUser = await UserService.findById(userId);
+      if(!verifyUser){
+        throw new HttpException(401, 'Unauthorized');
+      }
+      const transactions =  await TransactionService.getUserTransactions(userId);
+
+      return successResponse(
+        res,
+        transactions,
+        "User transactions fetched successfully",
+        statusCodes.SUCCESS
+      );
+      
+    } catch (error) {
+      if (error instanceof HttpException) {
+        return res.status(error.status).json({
+          status: "error",
+          message: error.message,
+        });
+      }
+
+      return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({
+        status: "error",
+        message: "Failed to get user transaction",
+      });
+    
+    }
+  },
+
+  getTransactionHistory: async (req: any, res: any) => {
+    try {
+      const userId = req.user._id;
+      console.log("Fetching transaction history for userId:", userId);
+      if(!userId){
+        throw new HttpException(401, 'Unauthorized');
+      }
+      const verifyUser = await UserService.findById(userId);
+      if(!verifyUser){
+        throw new HttpException(401, 'Unauthorized');
+      }
+      const history =  await TransactionService.getTransactionHistory(userId);
+      console.log("Transaction history fetched:", history);
+
+      return successResponse(
+        res,
+        history,
+        "Transaction history fetched successfully",
+        statusCodes.SUCCESS
+      );
+
+    } catch (error) {
+      if (error instanceof HttpException) {
+        return res.status(error.status).json({
+          status: "error",
+          message: error.message,
+        });
+      }
+
+    
+    }
   }
-};
+}
 
 export default TransactionController;

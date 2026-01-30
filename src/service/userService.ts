@@ -7,12 +7,10 @@ export class UserService {
   /** Check if user exists */
   static async findById(userId: string): Promise<User | null> {
     const result = await pool.query<User>(
-      `SELECT user_id, full_name, email, phone_number, user_type, kyc_level, bvn, nin, joined_date
-       FROM users WHERE user_id = $1`,
-      [userId]
+      `SELECT * FROM users WHERE user_id = $1`,[userId]
     );
 
-    return result.rows[0] || null;
+    return result.rows[0];
   }
 
   /** Used for phone-based transfers */

@@ -1,11 +1,8 @@
-import jwt, { SignOptions, JwtPayload } from "jsonwebtoken";
+import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-/**
- * Load and validate JWT secret
- */
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
@@ -13,20 +10,11 @@ if (!JWT_SECRET) {
 }
 
 /**
- * JWT Sign
+ * JWT Verify (callback-based, same style as User API)
  */
-export const jwtSign = (
-  payload: string | object | Buffer,
-  options: SignOptions = { expiresIn: "15m" }
-): string => {
-  return jwt.sign(payload, JWT_SECRET, options);
-};
-
-/**
- * JWT Verify
- */
-export const jwtVerify = <T = JwtPayload>(
-token: string, p0: unknown  
-): T => {
-  return jwt.verify(token, JWT_SECRET) as T;
+export const jwtVerify = (
+  token: string,
+  callback: (err: VerifyErrors | null, decoded?: JwtPayload | string) => void
+): void => {
+  jwt.verify(token, JWT_SECRET, callback);
 };
