@@ -4,14 +4,16 @@ export interface IBetting {
   id: string;                 // UUID
   user_id: string;            // UUID
 
-  phone_number: string;       // Recipient number
-  network: "MTN" | "AIRTEL" | "GLO" | "9MOBILE";
+  betting_id: string;       // Recipient number
+  network: string;            // betting network provider
+
+  customer_name?: string;
 
   amount: number;
   currency: string;
 
   reference: string;          // Unique transaction reference
-  provider_reference?: string; // From airtime provider
+  provider_reference?: string; // From betting provider
 
   status: "pending" | "completed" | "failed" | "reversed";
 
@@ -25,15 +27,16 @@ const Betting = {
     async createBettingTransaction(tx:IBetting){
         const query = `
             INSERT INTO betting_transactions 
-            (user_id, phone_number, network, amount, currency, reference, provider_reference, status, metadata)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+            (user_id, betting_id, network, customer_name, amount, currency, reference, provider_reference, status, metadata)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
             RETURNING *;
         `;
 
           const values = [
     tx.user_id,
-    tx.phone_number,
+    tx.betting_id,
     tx.network,
+    tx.customer_name ?? null,
     tx.amount ,
     tx.currency ?? null,
     tx.reference,
@@ -44,6 +47,11 @@ const Betting = {
 
   const result = await pool.query(query, values);
   return result.rows[0];
+    },
+
+    async getUserBettingById(id:any){
+       const result = await pool.query("SELECT * FROM betting_transactions WHERE user_id =$1", [id]);
+        return result.rows;
     }
 
 }

@@ -2,20 +2,20 @@ import HttpException from "../utils/httpExceptions";
 import { successResponse } from "../utils/successresponse";
 import statusCodes from "../constants/statuscodes";
 import { UserService } from "../service/userService";
-import AirtimeService from "../service/airtimeService";
+import BettingService from "../service/bettingService";
 import axios from "axios";
 import crypto from "crypto";
-import { airtimeTransactionSchema } from "../validations/airtimevalidation";
+import { bettingSchema } from "../validations/bettingvalidations";
 
 const API_URL = "http://localhost:4300";
 
 
 
-const AirtimeController = {
+const BettingController = {
  
-    getUserAirtimeTransactions: async (req: any, res: any) => {
+    getUserBettingTransactions: async (req: any, res: any) => {
         try {
-            const { userId } = req.body;
+            const  userId  = req.user._id;
             if (!userId) {
                 throw new HttpException(
                     statusCodes.BAD_REQUEST,
@@ -26,11 +26,11 @@ const AirtimeController = {
             if (!user) {
                 throw new HttpException(statusCodes.BAD_REQUEST, "User not found");
             }
-            const airtimeTransactions = await AirtimeService.getUserAirtimeById(user.user_id);
+            const bettingTransactions = await BettingService.getUserBettingById(user.user_id);
             return successResponse(
                 res,
-                airtimeTransactions,
-                "User airtime transactions fetched successfully",
+                bettingTransactions,
+                "User betting transactions fetched successfully",
                 statusCodes.SUCCESS
             );
         } catch (error) {
@@ -43,35 +43,35 @@ const AirtimeController = {
 
       return res.status(statusCodes.INTERNAL_SERVER_ERROR).json({
         status: "error",
-        message: "Failed to get airtime transaction",
+        message: "Failed to get betting transaction",
       });
         }
     },
 
-    createAirtimeTransaction: async (req: any, res: any) => {
+    createBettingTransaction: async (req: any, res: any) => {
         try {
             const userId = req.user._id
-
-            const parsed = airtimeTransactionSchema.safeParse(req.body);
+            const parsed =  bettingSchema.safeParse(req.body);
 
             if (!parsed.success) {
-            return res.status(400).json({
-                success: false,
-                message: "Validation error",
-                errors: parsed.error.flatten().fieldErrors,
-            });
-            }
-            const {  amount, currency, phone_number, network } = parsed.data;
+                return res.status(400).json({
+                    success: false,
+                    message: "Validation error",
+                    errors: parsed.error.flatten().fieldErrors,
+                });
+                }
 
-            if(!userId || !amount || !currency || !phone_number || !network){
-                throw new HttpException(statusCodes.BAD_REQUEST, "userId, amount, currency, phone_number and network are required");
+            const {  amount, currency, betting_id, network,customer_name } = parsed.data;
+
+            if(!userId || !amount || !currency || !betting_id || !network || !customer_name){
+                throw new HttpException(statusCodes.BAD_REQUEST, "userId, amount, currency, betting_id, network and customer_name are required");
             }
 
             if(Number(amount) <= 0){
                 throw new HttpException(statusCodes.BAD_REQUEST, "amount must be greater than zero");
             }
 
-            const reference =` AIR_${crypto.randomUUID()}`;
+            const reference =` BET_${crypto.randomUUID()}`;
 
             const user = await UserService.findById(userId);
 
@@ -101,20 +101,21 @@ const AirtimeController = {
           
 
 
-            await AirtimeService.create({
+            await BettingService.create({
                  user_id: userId,
                 amount,
                 currency,
-                phone_number,
+                customer_name,
+                betting_id,
                 network,
-                status: "PENDING",
+                status: "pending",
                 reference,
             })
 
             res.status(201).json({
                 success: true,
                 status: statusCodes.CREATED,
-                message: "Airtime transaction created successfully",
+                message: "Betting transaction created successfully",
                 data: {
                     reference,
                 }
@@ -137,4 +138,4 @@ const AirtimeController = {
 
 }
 
-export default AirtimeController;
+export default BettingController;

@@ -7,9 +7,6 @@ const AirtimeService = {
         return airtime;
 
     },
-    processAirtime: async (airtimeId: string) => {},
-    verifyWithProvider: async (reference: string) => {},
-    reverse: async (airtimeId: string) => {},
     getUserAirtimeById: async (id:any) =>{
         const airtimeTransactions = await Airtime.getUserAirtimeById(id);
         return airtimeTransactions;

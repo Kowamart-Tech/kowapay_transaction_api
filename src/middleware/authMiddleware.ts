@@ -31,7 +31,7 @@ export const authMiddleware = (
     const payload = decoded as any;
 
     req.user = {
-      _id: payload.sub || payload.id,
+      _id: payload.sub || payload._id,
       phone: payload.phone,
       user_type: payload.user_type,
       kyc_level: payload.kyc_level
